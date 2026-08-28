@@ -1,9 +1,8 @@
 name: Live Spider
 on:
   workflow_dispatch:
-  # 如需定时自动运行，取消下面注释，cron为UTC时间
   # schedule:
-  #   - cron: '0 16 * * *'   # 北京时间 0点执行
+  #   - cron: '0 16 * * *'
 
 jobs:
   Spider:
@@ -41,11 +40,12 @@ jobs:
           git config --global user.name "GitHub Action"
           git add json
           git add live
-          # 有变更才提交，无变更跳过commit，避免报错
-          if [[ -n "$(git status --porcelain)" ]];then
+          # 仅检测 json live 目录变更，忽略log、缓存等其他文件
+          CHANGED=$(git status --porcelain json live)
+          if [[ -n "$CHANGED" ]];then
             git commit -m "* 更新直播源"
           else
-            echo "直播源无变化，跳过提交"
+            echo "json/live目录无变化，跳过提交"
           fi
 
       - name: Push Live Config Changes To Github
