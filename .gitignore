@@ -1,0 +1,9 @@
+# 日志
+log/
+*.log
+# python缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
