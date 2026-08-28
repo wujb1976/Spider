@@ -1,6 +1,10 @@
 name: Live Spider
 on:
   workflow_dispatch:
+  # 如需定时自动运行，取消下面注释，cron为UTC时间
+  # schedule:
+  #   - cron: '0 16 * * *'   # 北京时间 0点执行
+
 jobs:
   Spider:
     runs-on: ubuntu-latest
@@ -8,17 +12,16 @@ jobs:
       TZ: Asia/Shanghai
     permissions:
       contents: write
-      security-events: write
-      pull-requests: write
     steps:
       - name: Clone TVSpider Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: "3.8"
 
       - name: Upgrade Pip
         run: |
@@ -27,25 +30,28 @@ jobs:
       - name: Install requirements
         run: |
           pip install -r ./requirements.txt
+
       - name: Live Spider
         run: |
-          python ./main.py 
+          python ./main.py
 
-      - name:  Commit Live Config files
+      - name: Commit Live Config files
         run: |
-          git config --global user.emai ${{ secrets.GT_EMAIL }}
-          git config --global user.name ${{ secrets.GH_ACTOR}}
+          git config --global user.email "github‑action@example.com"
+          git config --global user.name "GitHub Action"
           git add json
-          git add live 
-          commit_msg="* 更新直播源"
-          git commit -a -m "$commit_msg"
+          git add live
+          # 有变更才提交，无变更跳过commit，避免报错
+          if [[ -n "$(git status --porcelain)" ]];then
+            git commit -m "* 更新直播源"
+          else
+            echo "直播源无变化，跳过提交"
+          fi
 
       - name: Push Live Config Changes To Github
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v0.8.0
         with:
-          github_token: ${{ github.Token }}
+          github_token: ${{ github.token }}
           directory: .
           branch: main
-          force: true
-        env:
-          GITHUB_ACTOR: ${{ secrets.GH_ACTOR  }}
+          force: false
